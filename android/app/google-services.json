@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "669664802844",
+    "project_id": "masjid-f463b",
+    "storage_bucket": "masjid-f463b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669664802844:android:0b31d3c36236d76822c7d9",
+        "android_client_info": {
+          "package_name": "com.masjid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669664802844-h92hcpnc4ng7u0mqm4et9g07noridhfj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwmd2l5KTIUAhsVXeFzQTdVxS5LHwRS7A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669664802844-h92hcpnc4ng7u0mqm4et9g07noridhfj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
