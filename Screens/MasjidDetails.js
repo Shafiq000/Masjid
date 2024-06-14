@@ -23,11 +23,12 @@ const MasjidDetails = ({ navigation, route }) => {
   const [isHome, setIsHome] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPrayer, setSelectedPrayer] = useState(null);
-  const [newAlarmTime, setNewAlarmTime] = useState({});
+  const [newAlarmTime, setNewAlarmTime] = useState(10);
   const { isAuthenticated } = useAuthContext();
   const [isPlaySound, setIsPlaySound] = useState(false);
   const [alarmSounds, setAlarmSounds] = useState({});
-
+    //  console.log(editableTimes);
+    // console.log(editableAlarms);
   useEffect(() => {
     const loadMasjidData = async () => {
       const selectedMasjid = mosques.data.find(item => item.id === itemId);
@@ -266,7 +267,6 @@ const MasjidDetails = ({ navigation, route }) => {
   const openModal = (prayerName) => {
     if (isAuthenticated) {
       setSelectedPrayer(prayerName);
-      setNewAlarmTime(10);
       setModalVisible(true);
     } else {
       // Show an alert to the user to log in first
@@ -292,7 +292,6 @@ const MasjidDetails = ({ navigation, route }) => {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedPrayer(null);
-    setNewAlarmTime(10);
   };
 
   const saveAlarmTime = () => {
@@ -330,6 +329,17 @@ const MasjidDetails = ({ navigation, route }) => {
     }
   };
 
+  const setAndPersistNewAlarmTime = async (time) => {
+    setNewAlarmTime(time);
+    try {
+      const storetoggle = await AsyncStorage.getItem("NewAlarmTime", time.toString());
+      let toggle = storetoggle ? JSON.parse(storetoggle) : {};
+      await AsyncStorage.setItem("Alarms", JSON.stringify(toggle));
+    } catch (error) {
+      console.error("Error saving new alarm time:", error);
+    }
+  };
+
   const handleAlarmAdjustment = (adjustment) => {
     setAndPersistNewAlarmTime(prev => {
       const newTime = Math.max(Math.min(prev + adjustment, 60), 0);
@@ -361,26 +371,23 @@ const MasjidDetails = ({ navigation, route }) => {
       ...prev,
       [prayerName]: value
     }));
+    console.log("value",value);
+
     try {
-      await AsyncStorage.setItem("PlaySound", JSON.stringify(value));
+       await AsyncStorage.setItem("PlaySound", JSON.stringify(value));
+      
     } catch (e) {
       console.error("Error saving play sound setting:", e);
     }
   };
 
-  const setAndPersistNewAlarmTime = async (time) => {
-    try {
-      setNewAlarmTime(time);
-      await AsyncStorage.setItem("NewAlarmTime", time.toString());
-    } catch (error) {
-      console.error("Error saving new alarm time:", error);
-    }
-  };
+
   const checkPlaySoundStatus = async () => {
     try {
       const storedPlaySound = await AsyncStorage.getItem("PlaySound");
       if (storedPlaySound !== null) {
         setIsPlaySound(JSON.parse(storedPlaySound));
+        
       }
     } catch (e) {
       console.error("Error checking play sound status:", e);

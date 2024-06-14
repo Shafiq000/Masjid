@@ -6,13 +6,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthContext } from '../Navigations/AuthContext';
 import HeaderBack from '../Components/HeaderBack';
 
-const AlarmNotification = ({ navigation }) => {
+const AlarmNotification = ({ navigation, route }) => {
     const [isEnabled, setIsEnabled] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Adhan");
     const [alarmTimes, setAlarmTimes] = useState([]);
     const [sound, setSound] = useState(null);
     const { themeMode } = useAuthContext();
-
+    const { editableAlarms } = route?.params ?? {}; // Safely access editableAlarms
+    console.log(editableAlarms);
     Sound.setCategory('Playback');
 
     useEffect(() => {
@@ -81,7 +82,7 @@ const AlarmNotification = ({ navigation }) => {
         }
     };
 
-      const saveSettings = async () => {
+    const saveSettings = async () => {
         try {
             await AsyncStorage.setItem('isEnabled', isEnabled.toString());
             await AsyncStorage.setItem('selectedOption', selectedOption);
@@ -96,7 +97,7 @@ const AlarmNotification = ({ navigation }) => {
     
     return (
         <SafeAreaView style={[styles.container, themeMode === "dark" && { backgroundColor: "#1C1C22", color: "#fff" }]}>
-           <HeaderBack title={'Setting'} navigation={navigation}/>
+            <HeaderBack title={'Setting'} navigation={navigation}/>
             <View style={{ flexDirection: "column" }}>
                 <View style={styles.notifications}>
                     <Text style={[styles.title, themeMode === "dark" && { color: "#fff" }]}>Show Notifications</Text>
@@ -195,6 +196,5 @@ const styles = StyleSheet.create({
     radioButton: {
         flexDirection: 'row-reverse',
         alignSelf: 'flex-start',
-
     }
 });
