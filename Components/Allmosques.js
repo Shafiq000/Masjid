@@ -4,9 +4,10 @@ import Geolocation from '@react-native-community/geolocation';
 import mosques from '../Jsondata/Mosques.json';
 import haversine from 'haversine';
 import LocIcon from 'react-native-vector-icons/EvilIcons';
-
+import { useAuthContext } from '../Navigations/AuthContext';
 const Allmosques = ({ navigation }) => {
   const [currentLocation, setCurrentLocation] = useState(null);
+  const { themeMode } = useAuthContext();
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -79,7 +80,7 @@ const Allmosques = ({ navigation }) => {
     return (
       <Pressable
         key={item.id}
-        style={styles.itemContainer}
+        style={[styles.itemContainer,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}
         onPress={() => navigation.navigate('MasjidDetails', { itemId: item.id })}
       >
         <Image source={{ uri: item.mosque.image }} style={styles.image} />
@@ -99,7 +100,7 @@ const Allmosques = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}

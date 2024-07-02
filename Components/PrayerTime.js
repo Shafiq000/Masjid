@@ -171,7 +171,7 @@ const PrayerTime = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.prayerContainer}>
-        <Text style={{ right: 106 }}>Next Prayer</Text>
+        <Text style={[{ right: 106 },themeMode === "dark" && { color:'#ffff' }]}>Next Prayer</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 15, top: 5 }}>
           <Text style={[{ fontSize: 20, fontWeight: '700' }, themeMode === "dark" && { color: "#fff" }]}>{nextPrayer.name}</Text>
           <Text style={[{ fontSize: 20, fontWeight: '700' }, themeMode === "dark" && { color: "#fff" }]}>- {remainingTime}</Text>

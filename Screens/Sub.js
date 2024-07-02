@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HeaderBack from '../Components/HeaderBack';
 import LocIcon from 'react-native-vector-icons/EvilIcons';
-
+import { useAuthContext } from '../Navigations/AuthContext';
 const Sub = ({ navigation }) => {
   const [subMosque, setSubMosque] = useState([]);
+  const { themeMode } = useAuthContext();
 
   const fetchSubscribedMosques = async () => {
     try {
@@ -28,12 +29,12 @@ const Sub = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[{ flex:1 }]}>
       <HeaderBack title={'Subscribed Masjids'} navigation={navigation} />
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
         {subMosque.length > 0 ? (
           subMosque.map((mosque, index) => (
-            <View key={index} style={styles.mosqueContainer}>
+            <View key={index} style={[styles.mosqueContainer,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
               <Pressable onPress={() => handleItemPress(mosque)} style={styles.itemContainer}>
                 <Image source={{ uri: mosque.image }} style={styles.image} />
                 <View style={styles.overlay} />

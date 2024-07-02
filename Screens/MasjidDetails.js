@@ -27,8 +27,10 @@ const MasjidDetails = ({ navigation, route }) => {
   const { isAuthenticated } = useAuthContext();
   const [isPlaySound, setIsPlaySound] = useState(false);
   const [alarmSounds, setAlarmSounds] = useState({});
-    //  console.log(editableTimes);
-    // console.log(editableAlarms);
+  const { themeMode } = useAuthContext();
+
+   console.log(newAlarmTime);
+  // console.log(editableAlarms);
   useEffect(() => {
     const loadMasjidData = async () => {
       const selectedMasjid = mosques.data.find(item => item.id === itemId);
@@ -42,7 +44,7 @@ const MasjidDetails = ({ navigation, route }) => {
           Object.keys(selectedMasjid.timings).forEach((prayerName, index) => {
             initialEditMode[prayerName] = false;
             initialEditableTimes[prayerName] = convertTo12Hour(selectedMasjid.timings[prayerName]);
-            initialEditableAlarms[prayerName] = alarmtime[index] || "00:00";
+            initialEditableAlarms[prayerName] = alarmtime[index];
             initialEditableAlarms[prayerName] = false; // Initialize alarm sound state
           });
         }
@@ -60,17 +62,23 @@ const MasjidDetails = ({ navigation, route }) => {
 
     loadMasjidData();
   }, [itemId]);
+
   useEffect(() => {
     const loadPersistedData = async () => {
       try {
         const storedAlarms = await AsyncStorage.getItem("Alarms");
         if (storedAlarms) {
           setEditableAlarms(JSON.parse(storedAlarms));
+          const alarms = JSON.parse(storedAlarms);
+          if (alarms[itemId]) {
+            setAlarmSounds({ ...alarmSounds, [itemId]: alarms[itemId] });
+          }
         }
-
         const storedPlaySound = await AsyncStorage.getItem("PlaySound");
-        if (storedPlaySound !== null) {
-          setIsPlaySound(JSON.parse(storedPlaySound));
+        if (storedPlaySound) {
+          const { isPlaySound, alarmSounds } = JSON.parse(storedPlaySound);
+          setIsPlaySound(isPlaySound || false); // Default to false if undefined
+          // setAlarmSounds(alarmSounds || {}); // Default to empty object if undefined
         }
       } catch (error) {
         console.error("Error loading persisted data:", error);
@@ -144,10 +152,9 @@ const MasjidDetails = ({ navigation, route }) => {
     saveAlarmToStorage(prayerName, newAlarm);
   };
 
-
-  const handleShare = (duaArabic) => {
+  const handleShare = (mosqueTitle) => {
     Share.share({
-      message: duaArabic,
+      message: mosqueTitle,
     })
       .then((result) => console.log(result))
       .catch((errorMsg) => console.error(errorMsg));
@@ -267,6 +274,10 @@ const MasjidDetails = ({ navigation, route }) => {
   const openModal = (prayerName) => {
     if (isAuthenticated) {
       setSelectedPrayer(prayerName);
+      // setNewAlarmTime(10);
+      // if (selectedPrayer) {
+      //   setNewAlarmTime(prev => ({ ...prev, [selectedPrayer]:10 }));
+      // }
       setModalVisible(true);
     } else {
       // Show an alert to the user to log in first
@@ -294,28 +305,17 @@ const MasjidDetails = ({ navigation, route }) => {
     setSelectedPrayer(null);
   };
 
-  const saveAlarmTime = () => {
-    if (selectedPrayer) {
-      const currentPrayerTime = convertTo24Hour(editableTimes[selectedPrayer]);
-      const [currentHour, currentMinute] = currentPrayerTime.split(':').map(Number);
-      const alarmHour = currentHour;
-      const alarmMinute = currentMinute - newAlarmTime;
+  const handleModalSave = () => {
+    // if (selectedPrayer) {
+    //   setNewAlarmTime(prev => ({ ...prev, [selectedPrayer]: tempAlarmTime }));
+    // }
+    setModalVisible(false);
+    setSelectedPrayer(null);
+  }
 
-      let adjustedAlarmHour = alarmHour;
-      let adjustedAlarmMinute = alarmMinute;
-      if (adjustedAlarmMinute < 0) {
-        adjustedAlarmHour -= 1;
-        adjustedAlarmMinute += 60;
-      }
-
-      if (adjustedAlarmHour < 0) {
-        adjustedAlarmHour += 24;
-      }
-
-      const newAlarm = `${adjustedAlarmHour}:${adjustedAlarmMinute < 10 ? '0' : ''}${adjustedAlarmMinute}`;
-      handleAlarmChange(selectedPrayer, convertTo12Hour(newAlarm));
-    }
-    closeModal();
+  const handleCancelAlarm = () => {
+    // setTempAlarmTime(10); // Reset the temporary alarm time
+    setModalVisible(false);
   };
 
   const saveAlarmToStorage = async (prayerName, newAlarm) => {
@@ -326,17 +326,6 @@ const MasjidDetails = ({ navigation, route }) => {
       await AsyncStorage.setItem("Alarms", JSON.stringify(alarms));
     } catch (error) {
       console.error("Error saving alarm to storage:", error);
-    }
-  };
-
-  const setAndPersistNewAlarmTime = async (time) => {
-    setNewAlarmTime(time);
-    try {
-      const storetoggle = await AsyncStorage.getItem("NewAlarmTime", time.toString());
-      let toggle = storetoggle ? JSON.parse(storetoggle) : {};
-      await AsyncStorage.setItem("Alarms", JSON.stringify(toggle));
-    } catch (error) {
-      console.error("Error saving new alarm time:", error);
     }
   };
 
@@ -361,57 +350,86 @@ const MasjidDetails = ({ navigation, route }) => {
 
       const newAlarm = `${adjustedAlarmHour}:${adjustedAlarmMinute < 10 ? '0' : ''}${adjustedAlarmMinute}`;
       handleAlarmChange(selectedPrayer, convertTo12Hour(newAlarm));
+      AsyncStorage.setItem("NewAlarmTime", newTime.toString());
       return newTime;
     });
   };
-
   const handlePlaySoundToggle = async (prayerName, value) => {
-    setIsPlaySound(value);
-    setAlarmSounds(prev => ({
-      ...prev,
-      [prayerName]: value
-    }));
-    console.log("value",value);
-
+    setIsPlaySound(value); // Update local state immediately
+  
     try {
-       await AsyncStorage.setItem("PlaySound", JSON.stringify(value));
-      
-    } catch (e) {
-      console.error("Error saving play sound setting:", e);
+      // Update alarmSounds state for the current mosque only
+      setAlarmSounds(prev => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], [prayerName]: value }
+      }));
+  
+      // Save current mosque's alarm sound to AsyncStorage
+      const storedAlarms = await AsyncStorage.getItem("Alarms");
+      let alarms = storedAlarms ? JSON.parse(storedAlarms) : {};
+      alarms[itemId] = { ...alarms[itemId], [prayerName]: value };
+      await AsyncStorage.setItem("Alarms", JSON.stringify(alarms));
+    } catch (error) {
+      console.error("Error saving play sound setting:", error);
     }
   };
 
-
   const checkPlaySoundStatus = async () => {
     try {
-      const storedPlaySound = await AsyncStorage.getItem("PlaySound");
-      if (storedPlaySound !== null) {
-        setIsPlaySound(JSON.parse(storedPlaySound));
-        
+      const storedAlarms = await AsyncStorage.getItem("Alarms");
+      if (storedAlarms) {
+        const alarms = JSON.parse(storedAlarms);
+        if (alarms[itemId]) {
+          setAlarmSounds(alarms[itemId]);
+        }
       }
     } catch (e) {
       console.error("Error checking play sound status:", e);
     }
   };
 
+
+
+  const setAndPersistNewAlarmTime = async (time) => {
+    try {
+      setNewAlarmTime(time);
+      await AsyncStorage.setItem("NewAlarmTime", time.toString());
+    } catch (error) {
+      console.error("Error saving new alarm time:", error);
+    }
+  };
+  // const checkPlaySoundStatus = async () => {
+  //   try {
+  //     const storedPlaySound = await AsyncStorage.getItem("PlaySound");
+  //     if (storedPlaySound !== null) {
+  //       setIsPlaySound(JSON.parse(storedPlaySound));
+  //     }
+  //   } catch (e) {
+  //     console.error("Error checking play sound status:", e);
+  //   }
+  // };
+
   const renderPrayerTimings = () => {
     if (!masjid || !editableTimes) return null;
     return Object.keys(editableTimes).map(prayerName => (
       <View key={prayerName} >
-        <View style={styles.prayerContainer}>
+        <View style={[styles.prayerContainer,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
           <View style={styles.prayerInfo}>
-            <Text style={styles.prayerName}>{prayerName}</Text>
+            <Text style={[styles.prayerName,themeMode === "dark" && {color:'#ffff' }]}>{prayerName}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={styles.alarmText}>Alarm</Text>
+              <Text style={[styles.alarmText,themeMode === "dark" && { color:'#ffff' }]}>Alarm</Text>
               <Switch
-                value={alarmSounds[prayerName]}
+                trackColor={{ false: '#B2B2B2', true: '#5BB5AB' }}
+                // thumbColor={isEnabled ? '#0a9484' : '#f4f3f4'}
+                value={alarmSounds[itemId] && alarmSounds[itemId][prayerName]}
                 onValueChange={value => handlePlaySoundToggle(prayerName, value)}
               />
+
 
             </View>
           </View>
           <View style={styles.editContainer}>
-            <Text style={styles.prayerTime}>{editableTimes[prayerName]}</Text>
+            <Text style={[styles.prayerTime,themeMode === "dark" && { color:'#ffff' }]}>{editableTimes[prayerName]}</Text>
             <Pressable onPress={() => openModal(prayerName)} >
               <View style={styles.editalarm}>
                 <Text style={{ fontSize: 18, fontWeight: '600', right: 10 }}>{editableAlarms[prayerName]}</Text>
@@ -429,13 +447,13 @@ const MasjidDetails = ({ navigation, route }) => {
       <HeaderBack title={'Masjid Details'} navigation={navigation} />
       <ScrollView style={styles.container}>
         {masjid ? (
-          <View style={{ flex: 1 }}>
-            <View style={styles.content}>
-              <Text style={styles.title}>{masjid.title}</Text>
+          <View style={[{ flex: 1 },themeMode === "dark" && { backgroundColor: "#363B33" }]}>
+            <View style={[styles.content,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
+              <Text style={[styles.title,themeMode === "dark" && { color:'#ffff'}]}>{masjid.title}</Text>
               {masjid.location && (
                 <View style={{ flexDirection: 'row' }}>
-                  <LocIcon name='location' size={25} />
-                  <Text style={styles.address}>{masjid.location.address}</Text>
+                  <LocIcon name='location' size={25} style={[themeMode === "dark" && { color:'#fff' }]}/>
+                  <Text style={[styles.address,themeMode === "dark" && { color:'#fff' }]}>{masjid.location.address}</Text>
                 </View>
               )}
               <Image source={{ uri: masjid.image }} style={styles.image} />
@@ -483,7 +501,7 @@ const MasjidDetails = ({ navigation, route }) => {
             </View>
 
             <View style={{ marginHorizontal: 15, marginVertical: 20, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '500' }}>Jamaat Time</Text>
+              <Text style={[{ fontSize: 20, fontWeight: '500' },themeMode === "dark" && {color:'#ffff' }]}>Jamaat Time</Text>
             </View>
             {renderPrayerTimings()}
           </View>
@@ -534,10 +552,10 @@ const MasjidDetails = ({ navigation, route }) => {
                   </Pressable>
                 </View>
                 <View style={styles.modalButtons}>
-                  <Pressable onPress={closeModal} style={styles.modalButtonCancel}>
+                  <Pressable onPress={handleCancelAlarm} style={styles.modalButtonCancel}>
                     <Text style={{ fontSize: 15, fontWeight: '600', color: '#000' }}>Cancel</Text>
                   </Pressable>
-                  <Pressable onPress={saveAlarmTime} style={styles.modalButtonSave}>
+                  <Pressable onPress={handleModalSave} style={styles.modalButtonSave}>
                     <Text style={styles.modalButtonText}>Save</Text>
                   </Pressable>
                 </View>

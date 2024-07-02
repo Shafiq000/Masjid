@@ -21,14 +21,14 @@ const Home = ({ navigation }) => {
   return (
     <View style={[{ backgroundColor: '#FFFFFF', flex: 1 }]}>
       <MainHeader title={'Jamaat Hadith'} navigation={navigation} />
-      <View style={styles.container}>
+      <View style={[styles.container,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
         <TopTabNavigation />
       </View>
-      <View style={{ flex: .5, borderTopColor: '#cbcbcb', borderTopWidth: 1 }}>
+      <View style={[{ flex: .5, borderTopColor: '#cbcbcb', borderTopWidth: 1 },themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 15 }}>
-          <Text style={{ fontSize: 20, fontWeight: '600' }}> Masjids Nearby You</Text>
+          <Text style={[{ fontSize: 20, fontWeight: '600' },themeMode === "dark" && { color:'#ffff' }]}> Masjids Nearby You</Text>
           <Pressable onPress={handlemove}>
-            <Text style={{ fontSize: 15, fontWeight: '500' }}>See All</Text>
+            <Text style={[{ fontSize: 15, fontWeight: '500' },themeMode === "dark" && { color:'#ffff' }]}>See All</Text>
           </Pressable>
         </View>
         <Allmosques navigation={navigation} />

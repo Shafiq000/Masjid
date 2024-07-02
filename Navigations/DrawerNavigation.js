@@ -9,15 +9,6 @@ const Drawer = createDrawerNavigator();
 
 const DrawerNavigation = ({ navigation }) => {
   const { user, isAuthenticated } = useAuthContext();
-//  console.log('name & email', name, email);   
- 
-  const handleToLogin = () => {
-    navigation.navigate('Login');
-  };
-
-  const handleToSignUp = () => {
-    navigation.navigate('SignUp');
-  };
 
   return (
     <Drawer.Navigator
@@ -39,13 +30,13 @@ const DrawerNavigation = ({ navigation }) => {
                 </View>
               ) : (
                 <>
-                  <Pressable hitSlop={20} onPress={handleToLogin}>
+                  <Pressable hitSlop={20} onPress={() => navigation.navigate('Login')}>
                     <View style={styles.logContainer}>
                       <Text style={styles.logText}>Login</Text>
                     </View>
                   </Pressable>
                   <Text style={styles.orText}>or</Text>
-                  <Pressable hitSlop={20} onPress={handleToSignUp}>
+                  <Pressable hitSlop={20} onPress={() => navigation.navigate('SignUp')}>
                     <View style={styles.regContainer}>
                       <Text style={styles.regText}>Sign Up</Text>
                     </View>
@@ -62,6 +53,7 @@ const DrawerNavigation = ({ navigation }) => {
     </Drawer.Navigator>
   );
 };
+
 
 export default DrawerNavigation;
 

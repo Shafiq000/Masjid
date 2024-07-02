@@ -3,6 +3,7 @@ import { Appearance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next';
 
 const AuthContext = createContext(null);
 
@@ -13,14 +14,14 @@ const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [confirm, setConfirm] = useState(null);
 
   useEffect(() => {
-    GoogleSignin.configure({ webClientId: '497944709344-hq1cvv4nrph3sstc86eg0276tgb09042.apps.googleusercontent.com' }); // Replace with your actual webClientId
+    GoogleSignin.configure({ webClientId: '497944709344-hq1cvv4nrph3sstc86eg0276tgb09042.apps.googleusercontent.com' });
   }, []);
 
   useEffect(() => {
     (async () => {
-      // Load theme from AsyncStorage
       const storedTheme = await AsyncStorage.getItem("themeMode");
       if (storedTheme) {
         setThemeMode(storedTheme);
@@ -28,16 +29,13 @@ const AuthProvider = ({ children }) => {
         const systemTheme = Appearance.getColorScheme();
         setThemeMode(systemTheme || "light");
       }
-
-      // Check for stored user session data
       const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setIsAuthenticated(true);
       }
-
-      setLoading(false);  // Set loading to false once initialization is done
+      setLoading(false);
     })();
   }, []);
 
@@ -59,7 +57,6 @@ const AuthProvider = ({ children }) => {
         email: user.email,
         displayName: name,
         uid: user.uid,
-        // Add other properties if needed
       };
       setUser(userData);
       setIsAuthenticated(true);
@@ -76,9 +73,8 @@ const AuthProvider = ({ children }) => {
       const { user } = userCredential;
       const userData = {
         email: user.email,
-        displayName: user.displayName || 'User', // Ensure a fallback name is set
+        displayName: user.displayName || 'User',
         uid: user.uid,
-        // Add other properties if needed
       };
       setUser(userData);
       setIsAuthenticated(true);
@@ -86,6 +82,63 @@ const AuthProvider = ({ children }) => {
       return userData; // Return userData for further use in navigation
     } catch (error) {
       console.error("Error signing in with email: ", error);
+      throw error;
+    }
+  };
+
+  const updateUserProfile = async (updates) => {
+    try {
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        await currentUser.updateProfile(updates);
+        await currentUser.reload();
+        const updatedUser = auth().currentUser;
+        const updatedUserData = {
+          email: updatedUser.email,
+          displayName: updatedUser.displayName,
+          uid: updatedUser.uid,
+        };
+        setUser(updatedUserData);
+        await AsyncStorage.setItem("user", JSON.stringify(updatedUserData));
+        console.log("User profile updated successfully:", updatedUserData);
+      }
+    } catch (error) {
+      console.error("Error updating user profile: ", error);
+      throw error;
+    }
+  };
+
+  const updateUserEmail = async (newEmail) => {
+    try {
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        await currentUser.updateEmail(newEmail);
+        await currentUser.reload();
+        const updatedUser = auth().currentUser;
+        const updatedUserData = {
+          email: updatedUser.email,
+          displayName: updatedUser.displayName,
+          uid: updatedUser.uid,
+        };
+        setUser(updatedUserData);
+        await AsyncStorage.setItem("user", JSON.stringify(updatedUserData));
+        console.log("User profile updated successfully:", updatedUserData);
+      }
+    } catch (error) {
+      console.error("Error updating email: ", error);
+      throw error;
+    }
+  };
+
+  const updateUserPassword = async (currentPassword, newPassword) => {
+    try {
+      const user = auth().currentUser;
+      const credential = auth.EmailAuthProvider.credential(user.email, currentPassword);
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+      console.log("Password updated successfully");
+    } catch (error) {
+      console.error("Error updating password:", error);
       throw error;
     }
   };
@@ -99,7 +152,6 @@ const AuthProvider = ({ children }) => {
         email: user.email,
         displayName: user.name,
         uid: user.id,
-        // Add other properties if needed
       };
       setUser(userData);
       setIsAuthenticated(true);
@@ -129,29 +181,79 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const facebookSignIn = async () => {
+    try {
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+      if (result.isCancelled) {
+        console.log("User cancelled the login process");
+        return;
+      }
+      const data = await AccessToken.getCurrentAccessToken();
+      if (!data) {
+        console.error("Failed to get access token");
+        return;
+      }
+      const response = await fetch(`https://graph.facebook.com/v10.0/me?fields=id,name,email&access_token=${data.accessToken}`);
+      const user = await response.json();
+      if (user) {
+        const { name, email, id } = user;
+        const userData = {
+          email,
+          displayName: name,
+          uid: id,
+        };
+        setUser(userData);
+        setIsAuthenticated(true);
+        await AsyncStorage.setItem("user", JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error("Error signing in with Facebook:", error);
+    }
+  };
+
   const signOut = async () => {
     try {
-      // Google Sign Out
       await GoogleSignin.signOut();
-
-      // Firebase Sign Out
       const currentUser = auth().currentUser;
       if (currentUser) {
         await auth().signOut();
       }
-
-      // Clear local authentication state
-      setIsAuthenticated(false);
       setUser(null);
-
-      // Remove user-related data from AsyncStorage
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('HomeMasjid'); // Clear home mosque
-      await AsyncStorage.removeItem('Subscribe'); // Clear subscriptions
-
-      console.log('User signed out and data cleared');
+      setIsAuthenticated(false);
+      await AsyncStorage.removeItem("user");
     } catch (error) {
-      console.error('Error signing out: ', error);
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const signUpWithPhoneNumber = async (phoneNumber) => {
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      console.log("Confirmation:", confirmation);
+      setConfirm(confirmation);
+      return confirmation;
+    } catch (error) {
+      console.error('Error during phone sign-up:', error);
+      throw error;
+    }
+  };
+
+  const confirmCodeForSignUp = async (code) => {
+    try {
+      await confirm.confirm(code);
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        const userData = {
+          phoneNumber: currentUser.phoneNumber,
+          uid: currentUser.uid,
+        };
+        setUser(userData);
+        setIsAuthenticated(true);
+        await AsyncStorage.setItem("user", JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error('Error confirming code for sign-up:', error);
+      throw error;
     }
   };
 
@@ -165,9 +267,15 @@ const AuthProvider = ({ children }) => {
     signInWithEmail,
     signInWithGoogle,
     signOut,
+    facebookSignIn,
+    updateUserProfile,
+    updateUserEmail,
+    updateUserPassword,
+    signUpWithPhoneNumber,
+    confirmCodeForSignUp, // New function for confirming code during sign-up
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

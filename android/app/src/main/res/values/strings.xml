@@ -1,3 +1,7 @@
 <resources>
+    <string name="expo_splash_screen_resize_mode" translatable="false">native</string>
     <string name="app_name">Masjid</string>
+    <string name="facebook_app_id">489000913700341</string>
+    <string name="fb_login_protocol_scheme">fb1234</string>
+     <string name="facebook_client_token">717cbca7d6e4147c87742b15849f0381</string>
 </resources>

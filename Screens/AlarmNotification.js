@@ -7,24 +7,25 @@ import { useAuthContext } from '../Navigations/AuthContext';
 import HeaderBack from '../Components/HeaderBack';
 
 const AlarmNotification = ({ navigation, route }) => {
+    const { alarmTime } = route?.params ?? { alarmTime: { hours: 19, minutes: 0 } }; // Default to 7:00 PM
     const [isEnabled, setIsEnabled] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Adhan");
-    const [alarmTimes, setAlarmTimes] = useState([]);
     const [sound, setSound] = useState(null);
+    const [hasPlayed, setHasPlayed] = useState(false); // To track if the sound has played for the current minute
     const { themeMode } = useAuthContext();
-    const { editableAlarms } = route?.params ?? {}; // Safely access editableAlarms
-    console.log(editableAlarms);
+
+    console.log("alarmTime", alarmTime);
+
     Sound.setCategory('Playback');
 
     useEffect(() => {
         loadSound();
         loadSettings();
-        const intervalId = setInterval(checkPrayerTimeMatch, 60000);
+        const intervalId = setInterval(checkPrayerTimeMatch, 1000);
         return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {
-        checkPrayerTimeMatch();
         saveSettings();
     }, [selectedOption, isEnabled]);
 
@@ -34,17 +35,12 @@ const AlarmNotification = ({ navigation, route }) => {
             setIsEnabled(storedIsEnabled === 'true');
             const storedSelectedOption = await AsyncStorage.getItem('selectedOption');
             setSelectedOption(storedSelectedOption || 'Adhan');
-
-            const savedAlarmTimes = await AsyncStorage.getItem('alarmTimes');
-            if (savedAlarmTimes) {
-                setAlarmTimes(JSON.parse(savedAlarmTimes));
-            }
         } catch (error) {
             console.error('Error loading settings:', error);
         }
     };
 
-    const loadSound = async () => {
+    const loadSound = () => {
         const soundObject = new Sound(
             "azan.mp3",
             Sound.MAIN_BUNDLE,
@@ -59,17 +55,38 @@ const AlarmNotification = ({ navigation, route }) => {
     };
 
     const checkPrayerTimeMatch = () => {
+        if (!isEnabled) return; // Don't check if notifications are disabled
+
         const currentTime = new Date();
-        const currentTimeStr = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        if (!isEnabled || selectedOption === "Default") {
-            if (sound) {
-                sound.stop();
-            }
-            return;
+        const currentHours = currentTime.getHours();
+        const currentMinutes = currentTime.getMinutes();
+
+        console.log(`Current Time: ${currentHours}:${currentMinutes}`);
+
+        // Get the alarm time from the passed parameters
+        const { hours: alarmHours, minutes: alarmMinutes } = alarmTime;
+
+        // Check if current time matches the alarm time and ensure the sound hasn't played already for this minute
+        if (currentHours === alarmHours && currentMinutes === alarmMinutes && !hasPlayed && sound) {
+            sound.play((success) => {
+                if (success) {
+                    console.log(`Playing sound at ${alarmHours}:${alarmMinutes}`);
+                    setHasPlayed(true); // Mark sound as played for the current minute
+
+                    // Stop the sound once it has played completely
+                    sound.stop(() => {
+                        console.log('Sound has stopped');
+                        setHasPlayed(false); // Reset for the next alarm trigger
+                    });
+                } else {
+                    console.log('Sound playback failed due to audio decoding errors');
+                }
+            });
         }
-        const matchingAlarm = alarmTimes.find(alarmTime => alarmTime === currentTimeStr);
-        if (matchingAlarm && sound) {
-            sound.play();
+
+        // Reset the hasPlayed flag if the current minute is no longer the alarm minute
+        if (currentMinutes !== alarmMinutes) {
+            setHasPlayed(false);
         }
     };
 
@@ -94,7 +111,7 @@ const AlarmNotification = ({ navigation, route }) => {
     const handleOptionPress = (option) => {
         setSelectedOption(option);
     };
-    
+
     return (
         <SafeAreaView style={[styles.container, themeMode === "dark" && { backgroundColor: "#1C1C22", color: "#fff" }]}>
             <HeaderBack title={'Setting'} navigation={navigation}/>

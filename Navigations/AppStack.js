@@ -10,6 +10,11 @@ import SignUp from '../Screens/SignUp';
 import Setting from '../Screens/Setting';
 import PrayerSetting from '../Screens/PrayerSetting';
 import AlarmNotification from '../Screens/AlarmNotification';
+import Profile from '../Screens/Profile';
+import Fullname from '../Screens/Fullname';
+import Email from '../Screens/Email';
+import UpdatePassowrd from '../Screens/UpdatePassowrd';
+import PhoneVerification from '../Screens/PhoneVerification';
 const Stack = createNativeStackNavigator();
 
 function AppStack() {
@@ -25,6 +30,11 @@ function AppStack() {
             <Stack.Screen name="Setting" component={Setting} />
             <Stack.Screen name="PrayerSetting" component={PrayerSetting} />
             <Stack.Screen name="AlarmNotification" component={AlarmNotification} />
+            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="Fullname" component={Fullname} />
+            <Stack.Screen name="Email" component={Email} />
+            <Stack.Screen name="UpdatePassowrd" component={UpdatePassowrd} />
+            <Stack.Screen name="PhoneVerification" component={PhoneVerification} />
 
         </Stack.Navigator>
     );

@@ -5,6 +5,7 @@ import { useAuthContext } from '../Navigations/AuthContext';
 
 const Notification = ({ navigation }) => {
   const { user, isAuthenticated } = useAuthContext();
+  const { themeMode } = useAuthContext();
 
   const getCurrentDate = () => {
     const date = new Date();
@@ -18,19 +19,19 @@ const Notification = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
       <HeaderBack title="Notification" navigation={navigation} />
       {isAuthenticated ? (
         <View style={{ flex: 1, alignItems: 'center', paddingVertical: 20 }}>
-          <View style={styles.welcomContainer}>
-            <Text style={styles.userInfoname}>Welcome {user.displayName}!</Text>
-            <Text style={styles.userInfoDate}>{getCurrentDate()}</Text>
-            <Text style={styles.userInfoText}>You are all set up to start using our services</Text>
+          <View style={[styles.welcomContainer,themeMode === "dark" && { backgroundColor: "#363B33" }]}>
+            <Text style={[styles.userInfoname,themeMode === "dark" && {color:'#fff'}]}>Welcome {user.displayName}!</Text>
+            <Text style={[styles.userInfoDate,themeMode === "dark" && {color:'#fff'}]}>{getCurrentDate()}</Text>
+            <Text style={[styles.userInfoText,themeMode === "dark" && {color:'#fff'}]}>You are all set up to start using our services</Text>
           </View>
         </View>
       ) : (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 15, fontWeight: '500' }}>No Logged-in User</Text>
+        <View style={[{ flex: 1, alignItems: 'center', justifyContent: 'center' },themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
+          <Text style={[{ fontSize: 15, fontWeight: '500' },themeMode === "dark" && { color:'#fff' }]}>No Logged-in User</Text>
         </View>
       )}
     </View>

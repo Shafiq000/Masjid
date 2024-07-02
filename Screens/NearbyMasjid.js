@@ -5,9 +5,10 @@ import HeaderBack from '../Components/HeaderBack';
 import mosques from '../Jsondata/Mosques.json';
 import haversine from 'haversine';
 import LocIcon from 'react-native-vector-icons/EvilIcons';
-
+import { useAuthContext } from '../Navigations/AuthContext';
 const NearbyMasjid = ({ navigation }) => {
   const [currentLocation, setCurrentLocation] = useState(null);
+  const { themeMode } = useAuthContext();
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -33,7 +34,7 @@ const NearbyMasjid = ({ navigation }) => {
     requestLocationPermission();
   }, []);
 
-  const getCurrentLocation = () =>{
+  const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       (position) => setCurrentLocation({
         latitude: position.coords.latitude,
@@ -70,7 +71,7 @@ const NearbyMasjid = ({ navigation }) => {
         item.mosque.location.latitude,
         item.mosque.location.longitude
       );
-          // console.log("distance",distance);
+      // console.log("distance",distance);
       if (distance >= 1000) {
         distanceText = (distance / 1000).toFixed(1) + ' Km';
       } else {
@@ -97,7 +98,7 @@ const NearbyMasjid = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,themeMode === "dark" && { backgroundColor: "#1C1C22" }]}>
       <HeaderBack title={'Nearby Masjids'} navigation={navigation} />
       <FlatList
         data={mosques.data}

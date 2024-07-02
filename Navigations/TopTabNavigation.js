@@ -3,10 +3,12 @@ import { StyleSheet,Text } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import Masjid from '../Components/Masjid';
 import PrayerTime from '../Components/PrayerTime';
-
+import { useAuthContext } from './AuthContext';
 const Tab = createMaterialTopTabNavigator();
 
 const TopTabNavigation = () => {
+  const { themeMode } = useAuthContext();
+
   return (
       <Tab.Navigator
       
@@ -26,7 +28,7 @@ const TopTabNavigation = () => {
         tabBarIndicatorStyle: {
             backgroundColor: 'transparent',
         },
-        tabBarContentContainerStyle: {backgroundColor : 'transparent', },
+        tabBarContentContainerStyle: [{backgroundColor : 'transparent', },themeMode === "dark" && { backgroundColor: "#1C1C22" }],
         tabBarItemStyle: { width: 80, height: 40 },
     }}
       >

@@ -4,12 +4,13 @@ import ExclaIcon from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LocIcon from 'react-native-vector-icons/EvilIcons';
 import moment from 'moment';
-
+import { useAuthContext } from '../Navigations/AuthContext';
 const Masjid = ({ navigation }) => {
   const [homeMasjid, setHomeMasjid] = useState(null);
   const [nextPrayer, setNextPrayer] = useState({});
   const [remainingTime, setRemainingTime] = useState('');
   const [intervalId, setIntervalId] = useState(null);
+  const { themeMode } = useAuthContext();
 
   const fetchHomeMasjid = async () => {
     try {
@@ -90,17 +91,17 @@ const Masjid = ({ navigation }) => {
         <Pressable onPress={() => handleItemPress(homeMasjid)} style={styles.forMosqueContainer}>
           <View style={styles.innerBodyMosqueStyle}>
             <View style={styles.titleStyleContainer}>
-              <Text style={styles.title}>{homeMasjid.title}</Text>
+              <Text style={[styles.title,themeMode === "dark" && { color:'#ffff' }]}>{homeMasjid.title}</Text>
               <View style={{ flexDirection: 'row' }}>
-                <LocIcon name='location' size={25} />
-                <Text style={styles.address}>{homeMasjid.address}</Text>
+                <LocIcon name='location' size={25} style={[themeMode === "dark" && { color:'#ffff' }]} />
+                <Text style={[styles.address,themeMode === "dark" && { color:'#ffff' }]}>{homeMasjid.address}</Text>
               </View>
             </View>
 
-            <Text style={{ bottom: 5, left: 10 }}>Next Jamaat {nextPrayer.prayer}</Text>
+            <Text style={[{ bottom: 5, left: 10 },themeMode === "dark" && { color:'#ffff' }]}>Next Jamaat {nextPrayer.prayer}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 10 }}>
-              <Text style={{ fontSize: 18, fontWeight: '700' }}>{nextPrayer.time ? nextPrayer.time.format('h:mm A') : ''}</Text>
-              <Text style={{ fontSize: 18, fontWeight: '700' }}>{remainingTime}</Text>
+              <Text style={[{ fontSize: 18, fontWeight: '700' },themeMode === "dark" && { color:'#ffff' }]}>{nextPrayer.time ? nextPrayer.time.format('h:mm A') : ''}</Text>
+              <Text style={[{ fontSize: 18, fontWeight: '700' },themeMode === "dark" && { color:'#ffff' }]}>{remainingTime}</Text>
             </View>
             <View style={styles.nameTimeStyle}>
               {homeMasjid.prayerTimes && Object.entries(homeMasjid.prayerTimes).map(([prayer, time]) => {
